@@ -1,6 +1,7 @@
 spring:
   datasource:
-    url: jdbc:mysql://luna-database-1.cla2o6s40pfp.ap-northeast-2.rds.amazonaws.com:3306/dailyharu
+    # url: jdbc:mysql://luna-database-1.cla2o6s40pfp.ap-northeast-2.rds.amazonaws.com:3306/dailyharu
+    url: jdbc:mysql://localhost:3307/dailyharu
     username: admin
     password: minjim3729
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -23,8 +24,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: minfrankdev
+    password: tdefxbdeworwnvnb
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
