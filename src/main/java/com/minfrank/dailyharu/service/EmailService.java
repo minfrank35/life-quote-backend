@@ -10,12 +10,11 @@ import org.springframework.stereotype.Service;
 public class EmailService {
     private final JavaMailSender emailSender;
     
-    public void sendVerificationEmail(String to, String token) {
+    public void sendVerificationEmail(String to, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setSubject("데일리하루 - 이메일 인증");
-        message.setText("다음 링크를 클릭하여 이메일을 인증해주세요: " +
-            "http://localhost:8080/api/auth/verify-email?token=" + token);
+        message.setText("당신의 인증번호는 " + code + "입니다. 5분 이내에 입력해주세요.");
         
         emailSender.send(message);
     }

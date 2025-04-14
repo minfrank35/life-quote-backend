@@ -1,5 +1,6 @@
 package com.minfrank.dailyharu.security;
 
+import com.minfrank.dailyharu.domain.Role;
 import com.minfrank.dailyharu.domain.User;
 import com.minfrank.dailyharu.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +31,14 @@ public class CustomUserDetailsService implements UserDetailsService {
                 return new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username);
             });
         
+        // role이 null인 경우 기본값으로 USER 사용
+        Role role = user.getRole() != null ? user.getRole() : Role.USER;
+        
         log.info("사용자 인증 성공: {}", user.getEmail());
         return new org.springframework.security.core.userdetails.User(
             user.getEmail(), // 이메일을 username으로 사용
             user.getPassword(),
-            Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+            Collections.singleton(new SimpleGrantedAuthority("ROLE_" + role.name()))
         );
     }
 } 

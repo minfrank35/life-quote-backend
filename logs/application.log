@@ -1,0 +1,46 @@
+2025-04-14T15:30:46.086+09:00  INFO 12008 --- [dailyharu] [main] c.m.dailyharu.DailyharuApplication       : Starting DailyharuApplication using Java 17.0.10 with PID 12008 (D:\cursorProjects\dailyharu2\target\classes started by jskim in D:\cursorProjects\dailyharu2)
+2025-04-14T15:30:46.089+09:00 DEBUG 12008 --- [dailyharu] [main] c.m.dailyharu.DailyharuApplication       : Running with Spring Boot v3.2.4, Spring v6.1.5
+2025-04-14T15:30:46.090+09:00  INFO 12008 --- [dailyharu] [main] c.m.dailyharu.DailyharuApplication       : The following 1 profile is active: "dev"
+2025-04-14T15:30:46.842+09:00  INFO 12008 --- [dailyharu] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-04-14T15:30:46.916+09:00  INFO 12008 --- [dailyharu] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 67 ms. Found 5 JPA repository interfaces.
+2025-04-14T15:30:47.604+09:00  INFO 12008 --- [dailyharu] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-04-14T15:30:47.617+09:00  INFO 12008 --- [dailyharu] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-04-14T15:30:47.618+09:00  INFO 12008 --- [dailyharu] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.19]
+2025-04-14T15:30:47.697+09:00  INFO 12008 --- [dailyharu] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-04-14T15:30:47.698+09:00  INFO 12008 --- [dailyharu] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1557 ms
+2025-04-14T15:30:47.863+09:00  INFO 12008 --- [dailyharu] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-04-14T15:30:47.945+09:00  INFO 12008 --- [dailyharu] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.4.4.Final
+2025-04-14T15:30:47.992+09:00  INFO 12008 --- [dailyharu] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-04-14T15:30:48.182+09:00  INFO 12008 --- [dailyharu] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-04-14T15:30:48.209+09:00  INFO 12008 --- [dailyharu] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-04-14T15:30:48.733+09:00  INFO 12008 --- [dailyharu] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@ff5d4f1
+2025-04-14T15:30:48.739+09:00  INFO 12008 --- [dailyharu] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-04-14T15:30:48.850+09:00  WARN 12008 --- [dailyharu] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-04-14T15:30:48.853+09:00  WARN 12008 --- [dailyharu] [main] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+2025-04-14T15:30:49.719+09:00  INFO 12008 --- [dailyharu] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-04-14T15:30:49.875+09:00  INFO 12008 --- [dailyharu] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-04-14T15:30:50.223+09:00 DEBUG 12008 --- [dailyharu] [main] c.m.d.security.JwtAuthenticationFilter   : Filter 'jwtAuthenticationFilter' configured for use
+2025-04-14T15:30:50.271+09:00  INFO 12008 --- [dailyharu] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-04-14T15:30:50.615+09:00  WARN 12008 --- [dailyharu] [main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'authController' defined in file [D:\cursorProjects\dailyharu2\target\classes\com\minfrank\dailyharu\controller\AuthController.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'userService' defined in file [D:\cursorProjects\dailyharu2\target\classes\com\minfrank\dailyharu\service\UserService.class]: Unsatisfied dependency expressed through constructor parameter 6: No qualifying bean of type 'com.minfrank.dailyharu.service.EmailService' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
+2025-04-14T15:30:50.619+09:00  INFO 12008 --- [dailyharu] [main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-04-14T15:30:50.621+09:00  INFO 12008 --- [dailyharu] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-04-14T15:30:50.703+09:00  INFO 12008 --- [dailyharu] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-04-14T15:30:50.705+09:00  INFO 12008 --- [dailyharu] [main] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2025-04-14T15:30:50.715+09:00  INFO 12008 --- [dailyharu] [main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-04-14T15:30:50.737+09:00 ERROR 12008 --- [dailyharu] [main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 6 of constructor in com.minfrank.dailyharu.service.UserService required a bean of type 'com.minfrank.dailyharu.service.EmailService' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'com.minfrank.dailyharu.service.EmailService' in your configuration.
+

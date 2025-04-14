@@ -1,11 +1,13 @@
 package com.minfrank.dailyharu.controller;
 
+import com.minfrank.dailyharu.dto.EmailVerificationRequest;
 import com.minfrank.dailyharu.dto.LoginRequest;
 import com.minfrank.dailyharu.dto.RefreshTokenRequest;
 import com.minfrank.dailyharu.dto.ResetPasswordRequest;
 import com.minfrank.dailyharu.dto.SignupRequest;
 import com.minfrank.dailyharu.dto.SignupResponse;
 import com.minfrank.dailyharu.dto.TokenResponse;
+import com.minfrank.dailyharu.service.EmailVerificationService;
 import com.minfrank.dailyharu.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
     private final UserService userService;
+    private final EmailVerificationService emailVerificationService;
+    
+    @PostMapping("/email/verify-request")
+    public ResponseEntity<Void> requestEmailVerification(@RequestBody EmailVerificationRequest request) {
+        emailVerificationService.sendVerificationCode(request.getEmail());
+        return ResponseEntity.ok().build();
+    }
     
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@RequestBody @Valid SignupRequest request) {

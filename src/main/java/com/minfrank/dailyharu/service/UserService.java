@@ -2,6 +2,7 @@ package com.minfrank.dailyharu.service;
 
 import com.minfrank.dailyharu.domain.AuthProvider;
 import com.minfrank.dailyharu.domain.EmailVerification;
+import com.minfrank.dailyharu.domain.Role;
 import com.minfrank.dailyharu.domain.User;
 import com.minfrank.dailyharu.dto.LoginRequest;
 import com.minfrank.dailyharu.dto.SignupRequest;
@@ -42,33 +43,32 @@ public class UserService {
     private final EmailService emailService;
     private final RefreshTokenService tokenService;
     private final UserDetailsService userDetailsService;
+    private final EmailVerificationService emailVerificationService;
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     
     @Transactional
     public void signup(SignupRequest request) {
+        // 이메일 중복 체크
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
         
+        // 이메일 인증 코드 검증
+        if (!emailVerificationService.verifyCode(request.getEmail(), request.getVerificationCode())) {
+            throw new IllegalStateException("이메일 인증이 필요합니다.");
+        }
+        
         User user = User.builder()
             .email(request.getEmail())
+            .username(request.getEmail())
             .password(request.getPassword()) // 클라이언트에서 이미 해시 처리되어 있으므로 그대로 저장
             .nickname(request.getNickname())
             .provider(AuthProvider.LOCAL)
+            .emailVerified(true) // 인증 코드 검증이 완료되었으므로 이메일 인증 완료 처리
+            .role(Role.USER) // 기본 역할 설정
             .build();
             
         userRepository.save(user);
-        
-        String token = UUID.randomUUID().toString();
-        EmailVerification verification = EmailVerification.builder()
-            .email(request.getEmail())
-            .token(token)
-            .expiryDate(LocalDateTime.now().plusDays(1))
-            .build();
-            
-        emailVerificationRepository.save(verification);
-        // 이메일 전송은 실제 구현 시 활성화
-        // emailService.sendVerificationEmail(request.getEmail(), token);
     }
     
     @Transactional
@@ -91,6 +91,7 @@ public class UserService {
         verification.verify();
     }
     
+    @Transactional(readOnly = false)
     public TokenResponse login(LoginRequest request) {
         try {
             log.debug("로그인 시도: {}으로 로그인 요청", request.getEmail());
@@ -175,6 +176,7 @@ public class UserService {
         tokenBlacklistService.blacklistToken(token, expirationTime);
     }
 
+    @Transactional(readOnly = false)
     public TokenResponse refreshToken(String refreshToken) {
         if (!tokenProvider.validateToken(refreshToken)) {
             throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.");
