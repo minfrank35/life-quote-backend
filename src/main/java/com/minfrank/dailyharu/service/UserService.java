@@ -31,7 +31,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
@@ -91,7 +90,7 @@ public class UserService {
         verification.verify();
     }
     
-    @Transactional(readOnly = false)
+    @Transactional
     public TokenResponse login(LoginRequest request) {
         try {
             log.debug("로그인 시도: {}으로 로그인 요청", request.getEmail());
@@ -176,7 +175,7 @@ public class UserService {
         tokenBlacklistService.blacklistToken(token, expirationTime);
     }
 
-    @Transactional(readOnly = false)
+    @Transactional
     public TokenResponse refreshToken(String refreshToken) {
         if (!tokenProvider.validateToken(refreshToken)) {
             throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.");
