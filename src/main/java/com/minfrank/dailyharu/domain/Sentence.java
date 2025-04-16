@@ -25,26 +25,42 @@ public class Sentence {
     @JoinColumn(name = "user_id")
     private User user;
     
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String content;
     
     @Column(nullable = false)
-    private LocalDate writtenDate;
+    private LocalDate writtenDate = LocalDate.now();
     
-    private int empathyCount;
+    @Column(nullable = false)
+    private int empathyCount = 0;
     
     @CreatedDate
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
+    
+    @Column
+    private String correction;
+    
+    @Column
+    private LocalDateTime correctedAt;
+    
+    @Column
+    private String nickname;
     
     @Builder
     public Sentence(User user, String content, LocalDate writtenDate) {
         this.user = user;
         this.content = content;
         this.writtenDate = writtenDate;
-        this.empathyCount = 0;
+        this.nickname = user.getNickname();
     }
     
-    public void increaseEmpathyCount() {
+    public void incrementEmpathyCount() {
         this.empathyCount++;
+    }
+
+    public void decrementEmpathyCount() {
+        if (this.empathyCount > 0) {
+            this.empathyCount--;
+        }
     }
 } 

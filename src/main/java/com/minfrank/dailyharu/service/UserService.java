@@ -3,16 +3,21 @@ package com.minfrank.dailyharu.service;
 import com.minfrank.dailyharu.domain.AuthProvider;
 import com.minfrank.dailyharu.domain.EmailVerification;
 import com.minfrank.dailyharu.domain.Role;
+import com.minfrank.dailyharu.domain.Sentence;
 import com.minfrank.dailyharu.domain.User;
 import com.minfrank.dailyharu.dto.LoginRequest;
+import com.minfrank.dailyharu.dto.SentenceResponse;
 import com.minfrank.dailyharu.dto.SignupRequest;
 import com.minfrank.dailyharu.dto.TokenResponse;
 import com.minfrank.dailyharu.dto.UpdateProfileRequest;
 import com.minfrank.dailyharu.repository.EmailVerificationRepository;
+import com.minfrank.dailyharu.repository.SentenceRepository;
 import com.minfrank.dailyharu.repository.UserRepository;
 import com.minfrank.dailyharu.security.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,12 +28,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +48,8 @@ public class UserService {
     private final RefreshTokenService tokenService;
     private final UserDetailsService userDetailsService;
     private final EmailVerificationService emailVerificationService;
+    private final PushTokenService pushTokenService;
+    private final SentenceRepository sentenceRepository;
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
     
     @Transactional
@@ -60,11 +67,11 @@ public class UserService {
         User user = User.builder()
             .email(request.getEmail())
             .username(request.getEmail())
-            .password(request.getPassword()) // 클라이언트에서 이미 해시 처리되어 있으므로 그대로 저장
+            .password(request.getPassword())
             .nickname(request.getNickname())
             .provider(AuthProvider.LOCAL)
-            .emailVerified(true) // 인증 코드 검증이 완료되었으므로 이메일 인증 완료 처리
-            .role(Role.USER) // 기본 역할 설정
+            .emailVerified(true)
+            .role(Role.USER)
             .build();
             
         userRepository.save(user);
@@ -94,7 +101,6 @@ public class UserService {
     public TokenResponse login(LoginRequest request) {
         try {
             log.debug("로그인 시도: {}으로 로그인 요청", request.getEmail());
-            // 로그인 처리 - 클라이언트에서 해시된 비밀번호 그대로 사용
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
@@ -105,7 +111,6 @@ public class UserService {
             String refreshToken = tokenProvider.generateRefreshToken(request.getEmail());
             
             log.debug("리프레시 토큰 저장");
-            // 데이터베이스에 리프레시 토큰 저장
             tokenService.saveToken(
                 "refresh_token:" + request.getEmail(),
                 refreshToken,
@@ -132,16 +137,12 @@ public class UserService {
             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
             
         String token = UUID.randomUUID().toString();
-        // 비밀번호 재설정 토큰 저장
         tokenService.saveToken(
             "pwd_reset:" + token,
             user.getEmail(),
             24,
             TimeUnit.HOURS
         );
-        
-        // 이메일 전송은 실제 구현 시 활성화
-        // emailService.sendPasswordResetEmail(email, token);
     }
     
     @Transactional
@@ -171,8 +172,14 @@ public class UserService {
     public void logout(String token) {
         Claims claims = tokenProvider.getClaims(token);
         long expirationTime = claims.getExpiration().getTime() - System.currentTimeMillis();
-        
         tokenBlacklistService.blacklistToken(token, expirationTime);
+        
+        String email = tokenProvider.getUserEmailFromToken(token);
+        tokenService.removeToken("refresh_token:" + email);
+        
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        pushTokenService.removeAllTokens(user);
     }
 
     @Transactional
@@ -188,7 +195,6 @@ public class UserService {
             throw new IllegalArgumentException("만료되었거나 유효하지 않은 리프레시 토큰입니다.");
         }
         
-        // 새 액세스 토큰 생성
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
@@ -199,7 +205,6 @@ public class UserService {
         String newAccessToken = tokenProvider.generateToken(authentication);
         String newRefreshToken = tokenProvider.generateRefreshToken(email);
         
-        // 새 리프레시 토큰으로 교체
         tokenService.saveToken(
             "refresh_token:" + email,
             newRefreshToken,
@@ -210,5 +215,14 @@ public class UserService {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         return new TokenResponse(newAccessToken, newRefreshToken, user.getNickname());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SentenceResponse> getRecentSentences() {
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusWeeks(1);
+        return sentenceRepository.findTop10ByCreatedAtAfterOrderByCreatedAtDesc(oneWeekAgo)
+            .stream()
+            .map(SentenceResponse::from)
+            .collect(Collectors.toList());
     }
 } 

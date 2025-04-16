@@ -4,61 +4,94 @@ import com.minfrank.dailyharu.domain.Sentence;
 import com.minfrank.dailyharu.domain.User;
 import com.minfrank.dailyharu.dto.SentenceRequest;
 import com.minfrank.dailyharu.dto.SentenceResponse;
+import com.minfrank.dailyharu.dto.TopSentencesResponse;
 import com.minfrank.dailyharu.repository.SentenceRepository;
-import com.minfrank.dailyharu.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class SentenceService {
     private final SentenceRepository sentenceRepository;
-    private final UserRepository userRepository;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    
+
     @Transactional
-    public SentenceResponse writeSentence(Long userId, SentenceRequest request) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-            
-        LocalDate today = LocalDate.now();
-        if (sentenceRepository.existsByUserAndWrittenDate(user, today)) {
-            throw new IllegalStateException("오늘은 이미 문장을 작성했습니다.");
+    public SentenceResponse writeSentence(User user, SentenceRequest request) {
+        if (hasWrittenToday(user)) {
+            throw new IllegalStateException("이미 오늘 문장을 작성했습니다.");
         }
-        
+
         Sentence sentence = Sentence.builder()
-            .user(user)
-            .content(request.getContent())
-            .writtenDate(today)
-            .build();
-            
-        sentenceRepository.save(sentence);
-        return SentenceResponse.success(sentence.getContent(), sentence.getWrittenDate().format(DATE_FORMATTER));
+                .user(user)
+                .content(request.getContent())
+                .writtenDate(LocalDate.now())
+                .build();
+
+        sentence = sentenceRepository.save(sentence);
+        return SentenceResponse.from(sentence);
     }
-    
+
+    @Transactional(readOnly = true)
     public SentenceResponse getRandomSentence(Long userId) {
-        LocalDate today = LocalDate.now();
-        Sentence randomSentence = sentenceRepository.findRandomSentenceExceptUser(userId, today)
-            .orElseThrow(() -> new IllegalStateException("오늘 작성된 다른 문장이 없습니다."));
-            
-        return new SentenceResponse(
-            randomSentence.getContent(),
-            randomSentence.getWrittenDate().format(DATE_FORMATTER),
-            null,
-            null,
-            randomSentence.getUser().getNickname()
-        );
+        List<Sentence> randomSentences = sentenceRepository.findRandomSentences(userId);
+        if (randomSentences.isEmpty()) {
+            throw new IllegalStateException("조회할 수 있는 문장이 없습니다.");
+        }
+        return SentenceResponse.from(randomSentences.get(0));
     }
-    
+
+    @Transactional(readOnly = true)
+    public TopSentencesResponse getTopSentences() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime yesterday = now.minusDays(1);
+        
+        List<Sentence> todaySentences = sentenceRepository.findTop10ByCreatedAtAfterOrderByCreatedAtDesc(now);
+        List<Sentence> yesterdaySentences = sentenceRepository.findTop10ByCreatedAtBetweenOrderByCreatedAtDesc(
+                yesterday, now);
+
+        return TopSentencesResponse.builder()
+                .today(todaySentences.stream().map(SentenceResponse::from).collect(Collectors.toList()))
+                .yesterday(yesterdaySentences.stream().map(SentenceResponse::from).collect(Collectors.toList()))
+                .build();
+    }
+
     @Transactional
-    public void addEmpathy(Long sentenceId) {
+    public void addEmpathy(Long userId, Long sentenceId) {
         Sentence sentence = sentenceRepository.findById(sentenceId)
-            .orElseThrow(() -> new IllegalArgumentException("문장을 찾을 수 없습니다."));
-        sentence.increaseEmpathyCount();
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 문장입니다."));
+        
+        if (sentence.getUser().getId().equals(userId)) {
+            throw new IllegalStateException("자신의 문장에는 공감할 수 없습니다.");
+        }
+
+        sentence.incrementEmpathyCount();
+    }
+
+    @Transactional
+    public void removeEmpathy(Long userId, Long sentenceId) {
+        Sentence sentence = sentenceRepository.findById(sentenceId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 문장입니다."));
+        
+        if (sentence.getUser().getId().equals(userId)) {
+            throw new IllegalStateException("자신의 문장에는 공감을 취소할 수 없습니다.");
+        }
+
+        if (sentence.getEmpathyCount() > 0) {
+            sentence.decrementEmpathyCount();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasWrittenToday(User user) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
+        return sentenceRepository.existsByUserAndCreatedAtBetween(user, startOfDay, now);
     }
 } 
